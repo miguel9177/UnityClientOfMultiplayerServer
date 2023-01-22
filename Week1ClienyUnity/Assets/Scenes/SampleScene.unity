@@ -328,10 +328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7770b182de3159a4ba587dfbe4a2bb6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  txt: {fileID: 1582295152}
-  _playerName: Miguel
-  _ipAdress: 192.168.0.38
-  _port: 9050
+  txtPing: {fileID: 1582295152}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
