@@ -97,9 +97,11 @@ public class NetworkManager : MonoBehaviour
         // Fill myClass with data
         playerInfoClass.position = player.playerInfo.position;
         playerInfoClass.rotation = player.playerInfo.rotation;
-       
+
         // Serialize MyClass to a byte array
-        byte[] serializedClass = playerInfoClass.SerializeToByteArray();
+        byte[] serializedClass = ObjectsSerializer.Serialize(playerInfoClass);
+
+        PlayerInfoClass playerInfoClass2 = ObjectsSerializer.Deserialize<PlayerInfoClass>(serializedClass);
 
         return serializedClass;
     }

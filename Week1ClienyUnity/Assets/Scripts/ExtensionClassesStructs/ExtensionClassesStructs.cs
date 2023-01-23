@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using UnityEngine;
 
 //THIS SCRIPT HANDLES ALL EXTENSIONS TO THE CODE
@@ -8,24 +9,24 @@ using UnityEngine;
 namespace Extensions.Vector
 {
     //this class creates a Vector3 that is serializable, since its mandatory to be able to send serializable data through the network, and the normal vector 3 isnt serializable
-    [Serializable]
+    [DataContract]
     public class Vector3Serializable
     {
-        public float x, y, z;
+        [DataMember]
+        public float x;
+        public float y;
+        public float z;
 
-        public Vector3Serializable(Vector3 vector3)
+        public Vector3Serializable(float x_, float y_, float z_)
         {
-            x = vector3.x;
-            y = vector3.y;
-            z = vector3.z;
+            x = x_;
+            y = y_;
+            z = z_;
         }
 
         public Vector3Serializable() { }
 
-        public Vector3 ToVector3()
-        {
-            return new Vector3(x, y, z);
-        }
+        
     }
 }
 public static class ExtensionClassesStructs
