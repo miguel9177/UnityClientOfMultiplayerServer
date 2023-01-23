@@ -5,7 +5,7 @@ using TMPro;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-
+using Serializer;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -18,7 +18,9 @@ public class NetworkManager : MonoBehaviour
     //this stores the state of the udp
     static UdpState state = new UdpState();
     //this stores the player name
-    static string playerName = "Miguel";
+    public string playerName;
+    //this stores the player transform
+    public PlayerInfo player;
 
     string ipAdress = "192.168.0.38";
 
@@ -89,11 +91,17 @@ public class NetworkManager : MonoBehaviour
     //this will get the message that we want to send to the server
     private Byte[] GetMessageToSendToServer()
     {
-        //store the message to send to the server
-        string myMessage2 = "PlayerName: " + playerName + " / Ping: HAVENT MADE PING TIMER YET";
-        //make the message a byte array, since we always need to do this
-        byte[] array = Encoding.ASCII.GetBytes(myMessage2);
-        return array;
+
+        PlayerInfoClass playerInfoClass = new PlayerInfoClass();
+
+        // Fill myClass with data
+        playerInfoClass.position = player.playerInfo.position;
+        playerInfoClass.rotation = player.playerInfo.rotation;
+       
+        // Serialize MyClass to a byte array
+        byte[] serializedClass = playerInfoClass.SerializeToByteArray();
+
+        return serializedClass;
     }
 
     //this will read the message received from the server
