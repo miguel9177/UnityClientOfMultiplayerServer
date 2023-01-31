@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Serializer;
+using System.Collections.Generic;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -20,14 +21,16 @@ public class NetworkManager : MonoBehaviour
     //this stores the player name
     public string playerName;
     //this stores the player transform
-    public PlayerInfo player;
+    //public PlayerInfo player;
+    public List<NetworkGameObject> netObjects;
 
-    string ipAdress = "192.168.0.38";
+    string ipAdress = "10.0.74.153";
 
     // Start is called before the first frame update
     void Start()
     {
         ConnectToServer();
+        RequestUIDs();
 
         //get the message that is necessary to send the server for a new connection
         byte[] messageToSendForLogin = GetMessageToLoginToServer();
@@ -42,6 +45,9 @@ public class NetworkManager : MonoBehaviour
         {
             //this gets the packet from the server in bytes
             byte[] receiveBytes = state._udpClient.EndReceive(result, ref state._ipEndPoint);
+
+            IfReceivedMessageIsUIDAssignThem(receiveBytes);
+
             //send the received message to the function that handles the received messages
             ReceivedMessageFromServer(receiveBytes);
 
@@ -64,6 +70,22 @@ public class NetworkManager : MonoBehaviour
             catch (SocketException ex)
             {
                 Debug.Log("Message Error " + ex);
+            }
+        }
+
+    }
+
+    private void RequestUIDs()
+    {
+        netObjects = new List<NetworkGameObject>();
+        netObjects.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
+        foreach (NetworkGameObject netObject in netObjects)
+        {
+            if (netObject.isLocallyOwned && netObject.uniqueNetworkID == 0)
+            {
+                string myMessage = "I need a UID for local object:" + netObject.localID;
+                byte[] array = Encoding.ASCII.GetBytes(myMessage);
+                state._udpClient.Send(array, array.Length);
             }
         }
 
@@ -95,15 +117,19 @@ public class NetworkManager : MonoBehaviour
         PlayerInfoClass playerInfoClass = new PlayerInfoClass();
 
         // Fill myClass with data
-        playerInfoClass.position = player.playerInfo.position;
-        playerInfoClass.rotation = player.playerInfo.rotation;
+        //playerInfoClass.position = player.playerInfo.position;
+        //playerInfoClass.rotation = player.playerInfo.rotation;
 
-        // Serialize MyClass to a byte array
-        byte[] serializedClass = ObjectsSerializer.Serialize(playerInfoClass);
+        //// Serialize MyClass to a byte array
+        //byte[] serializedClass = ObjectsSerializer.Serialize(playerInfoClass);
 
-        PlayerInfoClass playerInfoClass2 = ObjectsSerializer.Deserialize<PlayerInfoClass>(serializedClass);
+        //PlayerInfoClass playerInfoClass2 = ObjectsSerializer.Deserialize<PlayerInfoClass>(serializedClass);
 
-        return serializedClass;
+        //send the first message
+        byte[] array = Encoding.ASCII.GetBytes("UpdateMessage");
+        return array;
+
+        //return serializedClass;
     }
 
     //this will read the message received from the server
@@ -114,6 +140,47 @@ public class NetworkManager : MonoBehaviour
         //this writes on the console its message
         Debug.Log("Received " + receiveString + " from " + state._ipEndPoint.ToString());
     }
+
+    //this checks if we received a uid message, if so assign it
+    private void IfReceivedMessageIsUIDAssignThem(byte[] receiveBytes)
+    {
+        //this transforms it in a string 
+        string receiveString = Encoding.ASCII.GetString(receiveBytes);
+        if (receiveString.Contains("Assigned UID:"))
+        {
+
+            int parseFrom = receiveString.IndexOf(':');
+            int parseTo = receiveString.LastIndexOf(';');
+
+            //we need to parse the string from the server back into ints to work with
+            int localID = Int32.Parse(BetweenStrings(receiveString, ":", ";"));
+            int globalID = Int32.Parse(receiveString.Substring(receiveString.IndexOf(";") + 1));
+
+            Debug.Log("Got assignment: " + localID + " local to: " + globalID + " global");
+
+            foreach (NetworkGameObject netObject in netObjects)
+            {
+                //if the local ID sent by the server matches this game object
+                if (netObject.localID == localID)
+                {
+                    Debug.Log(localID + " : " + globalID);
+                    //the global ID becomes the server-provided value
+                    netObject.uniqueNetworkID = globalID;
+                }
+            }
+        }
+
+    }
+
+    public static String BetweenStrings(String text, String start, String end)
+    {
+        int p1 = text.IndexOf(start) + start.Length;
+        int p2 = text.IndexOf(end, p1);
+
+        if (end == "") return (text.Substring(p1));
+        else return text.Substring(p1, p2 - p1);
+    }
+
 
     //this closes the socket when we leave the progran
     private void CloseSocket()
