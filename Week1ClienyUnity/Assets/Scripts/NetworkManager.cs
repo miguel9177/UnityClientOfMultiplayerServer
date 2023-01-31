@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using Serializer;
 using System.Collections.Generic;
+using System.Collections;
 
 public class NetworkManager : MonoBehaviour
 {
@@ -32,10 +33,12 @@ public class NetworkManager : MonoBehaviour
         ConnectToServer();
         RequestUIDs();
 
-        //i need this to start the loop of sending messages to the server, this is necessary since i cant put the SendMessageAssyncCallback outside the start function or it wont work for some reason
-        byte[] startMessageAssyncCallBack = Encoding.ASCII.GetBytes("");
+        //get the message that is necessary to send the server for a new connection
+        byte[] messageToSendForLogin = GetMessageToLoginToServer();
         //start the loop of sending messages to the server
-        state._udpClient.BeginSend(startMessageAssyncCallBack, startMessageAssyncCallBack.Length, new AsyncCallback(SendMessageAssyncCallback), state);
+        state._udpClient.Send(messageToSendForLogin, messageToSendForLogin.Length);
+
+        StartCoroutine(SendNetworkUpdates(state._udpClient));
 
         //this starts the infinite loop void that will always be receiving the information from the server
         state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state);
@@ -56,22 +59,23 @@ public class NetworkManager : MonoBehaviour
         }
 
         //this will send messages to the server
-        void SendMessageAssyncCallback(IAsyncResult result)
-        {
-            try
-            {
-                state._udpClient.EndSend(result);
+        //void SendMessageAssyncCallback(IAsyncResult result)
+        //{
+        //    try
+        //    {
+        //        state._udpClient.EndSend(result);
 
-                byte[] messageToSend = GetMessageToSendToServer();
-                state._udpClient.BeginSend(messageToSend, messageToSend.Length, new AsyncCallback(SendMessageAssyncCallback), state);
+        //        List<byte[]> messageToSend = GetMessageToSendToServer();
+        //        for(int i = 0; i < messageToSend.Count; i++)
+        //            state._udpClient.BeginSend(messageToSend[i], messageToSend[i].Length, new AsyncCallback(SendMessageAssyncCallback), state);
 
-                Debug.Log("Message sent successfully!");
-            }
-            catch (SocketException ex)
-            {
-                Debug.Log("Message Error " + ex);
-            }
-        }
+        //        Debug.Log("Message sent successfully!");
+        //    }
+        //    catch (SocketException ex)
+        //    {
+        //        Debug.Log("Message Error " + ex);
+        //    }
+        //}
 
     }
 
@@ -103,26 +107,32 @@ public class NetworkManager : MonoBehaviour
     }
 
     //this will get the message that we want to send to the server
-    private Byte[] GetMessageToSendToServer()
+    private Byte[] GetMessageToLoginToServer()
     {
-
-        PlayerInfoClass playerInfoClass = new PlayerInfoClass();
-
-        // Fill myClass with data
-        //playerInfoClass.position = player.playerInfo.position;
-        //playerInfoClass.rotation = player.playerInfo.rotation;
-
-        //// Serialize MyClass to a byte array
-        //byte[] serializedClass = ObjectsSerializer.Serialize(playerInfoClass);
-
-        //PlayerInfoClass playerInfoClass2 = ObjectsSerializer.Deserialize<PlayerInfoClass>(serializedClass);
-
         //send the first message
-        byte[] array = Encoding.ASCII.GetBytes("UpdateMessage");
+        byte[] array = Encoding.ASCII.GetBytes("FirstEntrance");
         return array;
-
-        //return serializedClass;
     }
+
+    IEnumerator SendNetworkUpdates(UdpClient client)
+    {
+        while (true)
+        {
+            List<NetworkGameObject> netObjects = new List<NetworkGameObject>();
+            netObjects.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
+
+            foreach (NetworkGameObject netObject in netObjects)
+            {
+                if (netObject.isLocallyOwned)
+                {
+                    client.Send(netObject.GetPosAndRotPacket(), netObject.GetPosAndRotPacket().Length);
+                }
+            }
+
+            yield return new WaitForSeconds(0.2f);
+        }
+    }
+
 
     //this will read the message received from the server
     private void ReceivedMessageFromServer(byte[] receiveBytes)
