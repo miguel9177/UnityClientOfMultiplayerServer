@@ -24,7 +24,7 @@ public class NetworkManager : MonoBehaviour
     //public PlayerInfo player;
     public List<NetworkGameObject> netObjects;
 
-    string ipAdress = "10.0.74.153";
+    string ipAdress = "10.1.17.235";
 
     // Start is called before the first frame update
     void Start()
@@ -32,10 +32,10 @@ public class NetworkManager : MonoBehaviour
         ConnectToServer();
         RequestUIDs();
 
-        //get the message that is necessary to send the server for a new connection
-        byte[] messageToSendForLogin = GetMessageToLoginToServer();
+        //i need this to start the loop of sending messages to the server, this is necessary since i cant put the SendMessageAssyncCallback outside the start function or it wont work for some reason
+        byte[] startMessageAssyncCallBack = Encoding.ASCII.GetBytes("");
         //start the loop of sending messages to the server
-        state._udpClient.BeginSend(messageToSendForLogin, messageToSendForLogin.Length, new AsyncCallback(SendMessageAssyncCallback), state);
+        state._udpClient.BeginSend(startMessageAssyncCallBack, startMessageAssyncCallBack.Length, new AsyncCallback(SendMessageAssyncCallback), state);
 
         //this starts the infinite loop void that will always be receiving the information from the server
         state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state);
@@ -100,14 +100,6 @@ public class NetworkManager : MonoBehaviour
         state._ipEndPoint = new IPEndPoint(IPAddress.Parse(ipAdress), 9050);
         //we connect the client
         state._udpClient.Connect(state._ipEndPoint);
-    }
-
-    //this will get the message that we want to send to the server
-    private Byte[] GetMessageToLoginToServer()
-    {
-        //send the first message
-        byte[] array = Encoding.ASCII.GetBytes("FirstEntrance");
-        return array;
     }
 
     //this will get the message that we want to send to the server
