@@ -25,7 +25,7 @@ public class NetworkManager : MonoBehaviour
     //public PlayerInfo player;
     public List<NetworkGameObject> netObjects;
 
-    string ipAdress = "10.1.17.235";
+    string ipAdress = "10.1.229.232";
 
     // Start is called before the first frame update
     void Start()
