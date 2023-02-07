@@ -61,25 +61,7 @@ public class NetworkManager : MonoBehaviour
             state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state); //self-callback, meaning this loops infinitely
         }
 
-        //this will send messages to the server
-        //void SendMessageAssyncCallback(IAsyncResult result)
-        //{
-        //    try
-        //    {
-        //        state._udpClient.EndSend(result);
-
-        //        List<byte[]> messageToSend = GetMessageToSendToServer();
-        //        for(int i = 0; i < messageToSend.Count; i++)
-        //            state._udpClient.BeginSend(messageToSend[i], messageToSend[i].Length, new AsyncCallback(SendMessageAssyncCallback), state);
-
-        //        Debug.Log("Message sent successfully!");
-        //    }
-        //    catch (SocketException ex)
-        //    {
-        //        Debug.Log("Message Error " + ex);
-        //    }
-        //}
-
+     
         StartCoroutine(SendNetworkUpdates(state._udpClient));
         StartCoroutine(UpdateWorldState(state._udpClient));
     }
