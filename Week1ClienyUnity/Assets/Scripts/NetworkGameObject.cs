@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using UnityEngine;
 
@@ -35,7 +36,20 @@ public class NetworkGameObject : MonoBehaviour
     public void UpdatePosAndRotFromPacket(string data) //convert a packet to the relevant data and apply it to the gameobject properties
     {
         string[] values = data.Split(';');
-        transform.position = new Vector3(float.Parse(values[2]), float.Parse(values[3]), float.Parse(values[4]));
-        transform.rotation = new Quaternion(float.Parse(values[5]), float.Parse(values[6]), float.Parse(values[7]), float.Parse(values[8]));
+
+        CultureInfo ci = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+        ci.NumberFormat.CurrencyDecimalSeparator = ".";
+        
+        float posX = float.Parse(values[2], NumberStyles.Any, ci);
+        float posY = float.Parse(values[3], NumberStyles.Any, ci);
+        float posZ = float.Parse(values[4], NumberStyles.Any, ci);
+
+        float rotX = float.Parse(values[5], NumberStyles.Any, ci);
+        float rotY = float.Parse(values[6], NumberStyles.Any, ci);
+        float rotZ = float.Parse(values[7], NumberStyles.Any, ci);
+        float rotW = float.Parse(values[8], NumberStyles.Any, ci);
+
+        transform.position = new Vector3(posX, posY, posZ);
+        transform.rotation = new Quaternion(rotX, rotY, rotZ, rotW);
     }
 }
