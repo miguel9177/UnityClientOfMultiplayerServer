@@ -29,15 +29,13 @@ public class NetworkManager : MonoBehaviour
     public List<NetworkGameObject> worldState;
     //public List<NetworkGameObject> myNetObjects;
 
-    string ipAdress = "10.1.32.70";
+    string ipAdress = "10.1.8.64";
 
     // Start is called before the first frame update
     void Start()
     {
         ConnectToServer();
         RequestUIDs();
-
-       
 
         //get the message that is necessary to send the server for a new connection
         byte[] messageToSendForLogin = GetMessageToLoginToServer();
@@ -60,8 +58,7 @@ public class NetworkManager : MonoBehaviour
             //this recalls this function to make it loop infinitely
             state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state); //self-callback, meaning this loops infinitely
         }
-
-     
+    
         StartCoroutine(SendNetworkUpdates(state._udpClient));
         StartCoroutine(UpdateWorldState(state._udpClient));
     }
@@ -139,24 +136,24 @@ public class NetworkManager : MonoBehaviour
             string previousRecieveString = receiveString;
 
             //if it's an object update, process it, otherwise skip
-            if (receiveString.Contains("Object data;"))
+            if (previousRecieveString.Contains("Object data;"))
             {
                 //we'll want to know if an object with this global id is already in the game world
                 bool objectIsAlreadyInWorld = false;
 
                 //we'll also want to exclude any invalid packets with a bad global id
-                if (GetGlobalIDFromPacket(receiveString) != 0)
+                if (GetGlobalIDFromPacket(previousRecieveString) != 0)
                 {
                     //for every networked gameobject in the world
-                    foreach (NetworkGameObject ngo in worldState)
+                    for (int i = 0; i < worldState.Count; i++)
                     {
                         //if it's unique ID matches the packet, update it's position from the packet
-                        if (ngo.uniqueNetworkID == GetGlobalIDFromPacket(receiveString))
+                        if (worldState[i].uniqueNetworkID == GetGlobalIDFromPacket(previousRecieveString) || worldState[i].uniqueNetworkID == 0)
                         {
                             //only update it if we don't own it - you might want to try disabling and seeing the effect
-                            if (!ngo.isLocallyOwned)
+                            if (!worldState[i].isLocallyOwned)
                             {
-                                ngo.UpdatePosAndRotFromPacket(receiveString);
+                                worldState[i].UpdatePosAndRotFromPacket(previousRecieveString);
 
                             }
                             //if we have any uniqueID matches, our object is in the world
@@ -168,10 +165,26 @@ public class NetworkManager : MonoBehaviour
                     //if it's not in the world, we need to spawn it
                     if (!objectIsAlreadyInWorld)
                     {
-                        GameObject otherPlayerAvatar = Instantiate(networkAvatar);
-                        //update its component properties from the packet
-                        otherPlayerAvatar.GetComponent<NetworkGameObject>().uniqueNetworkID = GetGlobalIDFromPacket(receiveString);
-                        otherPlayerAvatar.GetComponent<NetworkGameObject>().UpdatePosAndRotFromPacket(receiveString);
+                        int idReceived = GetGlobalIDFromPacket(previousRecieveString);
+                        //for every networked gameobject in the world
+                        for (int i = 0; i < worldState.Count; i++) 
+                        {
+                            //if it's unique ID matches the packet, update it's position from the packet
+                            if (worldState[i].uniqueNetworkID == idReceived)
+                            {
+                                //if we have any uniqueID matches, our object is in the world
+                                objectIsAlreadyInWorld = true;
+                            }
+
+                        }
+
+                        if(!objectIsAlreadyInWorld)
+                        {
+                            GameObject otherPlayerAvatar = Instantiate(networkAvatar);
+                            //update its component properties from the packet
+                            otherPlayerAvatar.GetComponent<NetworkGameObject>().uniqueNetworkID = GetGlobalIDFromPacket(previousRecieveString);
+                            otherPlayerAvatar.GetComponent<NetworkGameObject>().UpdatePosAndRotFromPacket(previousRecieveString);
+                        }
                     }
                 }
 
