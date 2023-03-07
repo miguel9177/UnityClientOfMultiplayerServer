@@ -25,8 +25,8 @@ public class NetworkGameObject : MonoBehaviour
                             transform.position.z * -100 + ";" +
                             transform.position.y * 100 + ";" +
                             transform.rotation.x + ";" +
-                            transform.rotation.y + ";" +
                             transform.rotation.z + ";" +
+                            transform.rotation.y + ";" +
                             transform.rotation.w + ";"
                             ;
 
@@ -46,8 +46,8 @@ public class NetworkGameObject : MonoBehaviour
         float posY = float.Parse(values[4], NumberStyles.Any, ci);
 
         float rotX = float.Parse(values[5], NumberStyles.Any, ci);
-        float rotY = float.Parse(values[6], NumberStyles.Any, ci);
-        float rotZ = float.Parse(values[7], NumberStyles.Any, ci);
+        float rotZ = float.Parse(values[6], NumberStyles.Any, ci);
+        float rotY = float.Parse(values[7], NumberStyles.Any, ci);
         float rotW = float.Parse(values[8], NumberStyles.Any, ci);
 
         transform.position = new Vector3(posX / 100, posY / 100, posZ / -100);
