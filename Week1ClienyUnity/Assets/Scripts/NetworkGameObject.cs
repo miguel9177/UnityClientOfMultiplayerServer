@@ -22,8 +22,8 @@ public class NetworkGameObject : MonoBehaviour
         //note if we put strings in this we might want to check they don’t have a semicolon or use a different delimiter like |
         string returnVal = "Object data;" + uniqueNetworkID + ";" +
                             transform.position.x * 100 + ";" +
-                            transform.position.y * 100 + ";" +
                             transform.position.z * -100 + ";" +
+                            transform.position.y * 100 + ";" +
                             transform.rotation.x + ";" +
                             transform.rotation.y + ";" +
                             transform.rotation.z + ";" +
@@ -42,8 +42,8 @@ public class NetworkGameObject : MonoBehaviour
         ci.NumberFormat.CurrencyDecimalSeparator = ".";
 
         float posX = float.Parse(values[2], NumberStyles.Any, ci);
-        float posY = float.Parse(values[3], NumberStyles.Any, ci);
-        float posZ = float.Parse(values[4], NumberStyles.Any, ci);
+        float posZ = float.Parse(values[3], NumberStyles.Any, ci);
+        float posY = float.Parse(values[4], NumberStyles.Any, ci);
 
         float rotX = float.Parse(values[5], NumberStyles.Any, ci);
         float rotY = float.Parse(values[6], NumberStyles.Any, ci);
