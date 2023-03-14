@@ -29,7 +29,7 @@ public class NetworkManager : MonoBehaviour
     public List<NetworkGameObject> worldState;
     //public List<NetworkGameObject> myNetObjects;
 
-    string ipAdress = "10.1.129.150";
+    string ipAdress = "10.1.113.216";
 
     // Start is called before the first frame update
     void Start()

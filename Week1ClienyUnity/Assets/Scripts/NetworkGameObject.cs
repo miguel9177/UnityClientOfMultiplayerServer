@@ -21,8 +21,8 @@ public class NetworkGameObject : MonoBehaviour
         //create a delimited string with the required data
         //note if we put strings in this we might want to check they don’t have a semicolon or use a different delimiter like |
         string returnVal = "Object data;" + uniqueNetworkID + ";" +
-                            transform.position.x * 100 + ";" +
-                            transform.position.z * -100 + ";" +
+                            transform.position.x * -100 + ";" +
+                            transform.position.z * 100 + ";" +
                             transform.position.y * 100 + ";" +
                             transform.rotation.x + ";" +
                             transform.rotation.z + ";" +
@@ -50,7 +50,7 @@ public class NetworkGameObject : MonoBehaviour
         float rotY = float.Parse(values[7], NumberStyles.Any, ci);
         float rotW = float.Parse(values[8], NumberStyles.Any, ci);
 
-        transform.position = new Vector3(posX / 100, posY / 100, posZ / -100);
+        transform.position = new Vector3(posX / -100, posY / 100, posZ / 100);
         transform.rotation = new Quaternion(rotX, rotY, rotZ, rotW);
     }
 }
