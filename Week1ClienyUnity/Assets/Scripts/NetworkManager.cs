@@ -208,7 +208,7 @@ public class NetworkManager : MonoBehaviour
         //this transforms it in a string 
         receiveString = Encoding.ASCII.GetString(receiveBytes);
         //this writes on the console its message
-        Debug.Log("Received " + receiveString + " from " + state._ipEndPoint.ToString());
+        //Debug.Log("Received " + receiveString + " from " + state._ipEndPoint.ToString());
     }
 
     //this checks if we received a uid message, if so assign it
