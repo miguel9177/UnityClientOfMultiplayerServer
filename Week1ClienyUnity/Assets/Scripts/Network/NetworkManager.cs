@@ -5,7 +5,6 @@ using TMPro;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using Serializer;
 using System.Collections.Generic;
 using System.Collections;
 
@@ -29,7 +28,7 @@ public class NetworkManager : MonoBehaviour
     public List<NetworkGameObject> worldState;
     //public List<NetworkGameObject> myNetObjects;
 
-    string ipAdress = "10.1.113.216";
+    string ipAdress = "10.1.7.94";
 
     // Start is called before the first frame update
     void Start()
@@ -207,8 +206,6 @@ public class NetworkManager : MonoBehaviour
     {
         //this transforms it in a string 
         receiveString = Encoding.ASCII.GetString(receiveBytes);
-        //this writes on the console its message
-        //Debug.Log("Received " + receiveString + " from " + state._ipEndPoint.ToString());
     }
 
     //this checks if we received a uid message, if so assign it

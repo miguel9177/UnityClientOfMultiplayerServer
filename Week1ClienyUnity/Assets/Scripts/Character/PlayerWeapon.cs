@@ -17,7 +17,6 @@ public class PlayerWeapon : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.TransformDirection(Vector3.forward) * 1000, Color.green);
         if (Input.GetMouseButtonDown(0))
             CharacterShotWeapon();
     }
