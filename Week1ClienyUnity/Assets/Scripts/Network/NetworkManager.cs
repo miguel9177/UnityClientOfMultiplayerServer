@@ -34,7 +34,6 @@ public class NetworkManager : MonoBehaviour
     void Start()
     {
         ConnectToServer();
-        RequestUIDs();
 
         //get the message that is necessary to send the server for a new connection
         byte[] messageToSendForLogin = GetMessageToLoginToServer();
@@ -42,7 +41,9 @@ public class NetworkManager : MonoBehaviour
         state._udpClient.Send(messageToSendForLogin, messageToSendForLogin.Length);
         //this starts the infinite loop void that will always be receiving the information from the server
         state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state);
-        
+
+        RequestUIDs();
+
         //this will receive all messages from the server
         void ReceiveMessageAsyncCallback(IAsyncResult result)
         {

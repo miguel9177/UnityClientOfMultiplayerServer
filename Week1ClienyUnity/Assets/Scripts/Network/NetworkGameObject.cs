@@ -10,6 +10,7 @@ public class NetworkGameObject : MonoBehaviour
     [SerializeField] public bool isLocallyOwned;
     [SerializeField] public int uniqueNetworkID;
     [SerializeField] public int localID;
+    public float hp;
 
     static int lastAssignedLocalID = 0;
     private void Awake()
@@ -59,5 +60,6 @@ public class NetworkGameObject : MonoBehaviour
 
         transform.position = new Vector3(posX / -100, posY / 100, posZ / 100);
         transform.rotation = new Quaternion(rotX, rotY, rotZ, rotW);
+        hp = float.Parse(values[9], NumberStyles.Any, ci);
     }
 }
