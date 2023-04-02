@@ -8,6 +8,7 @@ public class PlayerWeapon : MonoBehaviour
     public LayerMask charactersLayerMask;
     public Camera playerCamera;
     public string nameOfWeapon = "Raycast Weapon";
+    public float maxRange;
     // Start is called before the first frame update
     void Start()
     {
@@ -25,7 +26,7 @@ public class PlayerWeapon : MonoBehaviour
     {
         RaycastHit hit;
         // Does the ray intersect any objects excluding the player layer
-        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, charactersLayerMask))
+        if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.TransformDirection(Vector3.forward), out hit, maxRange, charactersLayerMask))
         {
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
             if(hit.transform.TryGetComponent(out NetworkGameObject enemyPlayerThatWasShot))
