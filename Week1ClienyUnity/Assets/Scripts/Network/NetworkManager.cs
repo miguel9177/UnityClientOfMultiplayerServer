@@ -28,7 +28,7 @@ public class NetworkManager : MonoBehaviour
     public List<NetworkGameObject> worldState;
     //public List<NetworkGameObject> myNetObjects;
 
-    string ipAdress = "10.1.7.94";
+    string ipAdress = "127.0.0.1";
 
     // Start is called before the first frame update
     void Start()
@@ -248,6 +248,11 @@ public class NetworkManager : MonoBehaviour
         else return text.Substring(p1, p2 - p1);
     }
 
+    public void AnEnemyPlayerWasShotByUs(NetworkGameObject characterWeWit, string nameOfWeapon)
+    {
+        string enemyPlayerHitMessage = "GameplayEvent: Player shot another player: Player with id;" + GameManager.Instance.ourPlayerNetworkObject.uniqueNetworkID + "; shot player with id; " + characterWeWit.uniqueNetworkID + "; with weapon;" + nameOfWeapon;
+        SendStringMessage(enemyPlayerHitMessage);
+    }
 
     //this closes the socket when we leave the progran
     private void CloseSocket()
@@ -262,6 +267,17 @@ public class NetworkManager : MonoBehaviour
     {
         CloseSocket();
     }
+
+    #region Helper functions
+
+    //this sends a message to the server
+    private void SendStringMessage(string message)
+    {
+        byte[] array = Encoding.ASCII.GetBytes(message);
+        state._udpClient.Send(array, array.Length);
+    }
+
+    #endregion
 }
 
 

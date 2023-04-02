@@ -17,20 +17,26 @@ public class NetworkGameObject : MonoBehaviour
         if (isLocallyOwned) localID = lastAssignedLocalID++;
     }
 
+    public Quaternion AddRotationAroundY(Quaternion original, float degrees)
+    {
+        Quaternion rotationY = Quaternion.Euler(0, degrees, 0);
+        return original * rotationY;
+    }
+
     public byte[] GetPosAndRotToPacket() //convert the relevant info on the gameobject to a packet
     {
+        Quaternion rotOfPlayerWithMinus90OnY = AddRotationAroundY(transform.rotation, 90);
         //create a delimited string with the required data
         //note if we put strings in this we might want to check they don’t have a semicolon or use a different delimiter like |
         string returnVal = "Object data;" + uniqueNetworkID + ";" +
                             transform.position.x * -100 + ";" +
                             transform.position.z * 100 + ";" +
                             transform.position.y * 100 + ";" +
-                            transform.rotation.x + ";" +
-                            transform.rotation.z + ";" +
-                            transform.rotation.y + ";" +
-                            transform.rotation.w + ";"
+                            rotOfPlayerWithMinus90OnY.x + ";" +
+                            rotOfPlayerWithMinus90OnY.z + ";" +
+                            rotOfPlayerWithMinus90OnY.y + ";" +
+                            rotOfPlayerWithMinus90OnY.w + ";"
                             ;
-
 
         return Encoding.ASCII.GetBytes(returnVal);
     }

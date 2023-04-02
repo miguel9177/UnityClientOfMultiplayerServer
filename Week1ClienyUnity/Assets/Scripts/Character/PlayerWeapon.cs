@@ -7,7 +7,7 @@ public class PlayerWeapon : MonoBehaviour
 {
     public LayerMask charactersLayerMask;
     public Camera playerCamera;
-
+    public string nameOfWeapon = "Raycast Weapon";
     // Start is called before the first frame update
     void Start()
     {
@@ -28,11 +28,17 @@ public class PlayerWeapon : MonoBehaviour
         if (Physics.Raycast(playerCamera.transform.position, playerCamera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, charactersLayerMask))
         {
             //Debug.DrawRay(transform.position, transform.TransformDirection(Vector3.forward) * hit.distance, Color.yellow);
-            Debug.Log("Hit" + hit.transform.name);
+            if(hit.transform.TryGetComponent(out NetworkGameObject enemyPlayerThatWasShot))
+            {
+                if (enemyPlayerThatWasShot == null)
+                    return;
+
+                //this tells the server that we shot a player
+                GameManager.Instance.netManager.AnEnemyPlayerWasShotByUs(enemyPlayerThatWasShot, nameOfWeapon);
+            }
         }
         else
         {
-            
             Debug.Log("No Hit");
         }
     }
