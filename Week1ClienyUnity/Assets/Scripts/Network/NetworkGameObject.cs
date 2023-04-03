@@ -62,4 +62,14 @@ public class NetworkGameObject : MonoBehaviour
         transform.rotation = new Quaternion(rotX, rotY, rotZ, rotW);
         hp = float.Parse(values[9], NumberStyles.Any, ci);
     }
+
+    //this updates the hp of the player
+    public void UpdateHpOfPlayerFromPacket(string data)
+    {
+        string[] values = data.Split(';');
+
+        CultureInfo ci = (CultureInfo)CultureInfo.CurrentCulture.Clone();
+        ci.NumberFormat.CurrencyDecimalSeparator = ".";
+        hp = float.Parse(values[9], NumberStyles.Any, ci);
+    }
 }

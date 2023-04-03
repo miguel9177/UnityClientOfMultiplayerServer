@@ -154,7 +154,10 @@ public class NetworkManager : MonoBehaviour
                             if (!worldState[i].isLocallyOwned)
                             {
                                 worldState[i].UpdatePosAndRotFromPacket(previousRecieveString);
-
+                            }
+                            else
+                            {
+                                worldState[i].UpdateHpOfPlayerFromPacket(previousRecieveString);
                             }
                             //if we have any uniqueID matches, our object is in the world
                             objectIsAlreadyInWorld = true;
