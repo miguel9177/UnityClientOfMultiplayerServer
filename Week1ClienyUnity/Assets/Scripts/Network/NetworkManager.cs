@@ -10,6 +10,7 @@ using System.Collections;
 
 public class NetworkManager : MonoBehaviour
 {
+    //this stores the udp state
     public struct UdpState
     {
         public UdpClient _udpClient;
@@ -20,20 +21,23 @@ public class NetworkManager : MonoBehaviour
     static UdpState state = new UdpState();
     //this stores the player name
     public string playerName;
-    //this stores the player transform
-    //public PlayerInfo player;
+    //this stores the received message from the server
     string receiveString = "";
+    //this stores if the player is connected to the serrver or not, to fix infinte loop on disconnect from server
     bool connectedToServer = true;
+    //this stores the prefab for new players
     [SerializeField] GameObject networkAvatar;
 
+    //this stores all the gameobjects from the worldd
     public List<NetworkGameObject> worldState;
-    //public List<NetworkGameObject> myNetObjects;
 
+    //this stores the ipadress of the server
     string ipAdress = "127.0.0.1";
 
     // Start is called before the first frame update
     void Start()
     {
+        //this connects to the server
         ConnectToServer();
 
         //get the message that is necessary to send the server for a new connection
@@ -43,16 +47,19 @@ public class NetworkManager : MonoBehaviour
         //this starts the infinite loop void that will always be receiving the information from the server
         state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state);
 
+        //this requests Uids to the server
         RequestUIDs();
 
-        //this will receive all messages from the server
+        //this will receive all messages from the server, being called by itself
         void ReceiveMessageAsyncCallback(IAsyncResult result)
         {
+            //trys to receive the message
             try
             {
                 //this gets the packet from the server in bytes
                 byte[] receiveBytes = state._udpClient.EndReceive(result, ref state._ipEndPoint);
 
+                //if the message we received was a Uid assignement we assign the uid to tthe multiplayer game object
                 IfReceivedMessageIsUIDAssignThem(receiveBytes);
 
                 //send the received message to the function that handles the received messages
@@ -61,30 +68,37 @@ public class NetworkManager : MonoBehaviour
                 //this recalls this function to make it loop infinitely
                 state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state); //self-callback, meaning this loops infinitely
             }
+            //if theres an error receiving the message we disconnect the player from the server
             catch(Exception e)
             {
                 connectedToServer = false;
             }
         }
     
+        //we start the send network updates coroutine
         StartCoroutine(SendNetworkUpdates(state._udpClient));
+        //we start the update world state coroutine
         StartCoroutine(UpdateWorldState(state._udpClient));
     }
 
+    //this function requests the uids from the server
     private void RequestUIDs()
     {
+        //we repopulate the world state list, by populating it with all network game objeccts
         worldState = new List<NetworkGameObject>();
         worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
-
-        //myNetObjects = new List<NetworkGameObject>();
-        //myNetObjects.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
+        //we loop through all network gameobjects in the world
         foreach (NetworkGameObject netObject in worldState)
         {
+            //if the current netobject is locally onwed and the unique network id is 0, it means the object is ours and hasnt got the uid setted up
             if (netObject.isLocallyOwned && netObject.uniqueNetworkID == 0)
             {
+                //we create a new message string asking for a new uid
                 string myMessage = "I need a UID for local object:" + netObject.localID;
+                //this converts the message created above to an array of bytes
                 byte[] array = Encoding.ASCII.GetBytes(myMessage);
+                //this sends the message to the server
                 state._udpClient.Send(array, array.Length);
             }
         }
@@ -102,7 +116,7 @@ public class NetworkManager : MonoBehaviour
         state._udpClient.Connect(state._ipEndPoint);
     }
 
-    //this will get the message that we want to send to the server
+    //this will get the message that we want to send to login to the server
     private Byte[] GetMessageToLoginToServer()
     {
         //send the first message
@@ -110,37 +124,46 @@ public class NetworkManager : MonoBehaviour
         return array;
     }
 
+    //this coroutine sends the network updates to the server
     IEnumerator SendNetworkUpdates(UdpClient client)
     {
+        //infinite loop
         while (true)
         {
+            //repopulates the world state with all network gameobjects
             worldState = new List<NetworkGameObject>();
             worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
+            //this foreach loops through all gameobjects
             foreach (NetworkGameObject netObject in worldState)
             {
+                //if the object is locally owned, and the unique network id is diferent then 0
                 if (netObject.isLocallyOwned && netObject.uniqueNetworkID != 0)
                 {
+                    //this string stores the object position and rotation
                     string A = Encoding.ASCII.GetString(netObject.GetPosAndRotToPacket());
+                    //this sends the posiiton and rotation to the server
                     client.Send(netObject.GetPosAndRotToPacket(), netObject.GetPosAndRotToPacket().Length);
                 }
             }
 
+            //we wait 0.5 seconds to not flud the server
             yield return new WaitForSeconds(0.5f);
             //yield return new WaitForEndOfFrame();
         }
     }
 
-
+    //this updates the world state
     IEnumerator UpdateWorldState(UdpClient client)
     {
+        //while we are connected to the server
         while (connectedToServer)
         {
-            //read in the current world state as all network game objects in the scene
+            //repopulates the world state with all network gameobjects
             worldState = new List<NetworkGameObject>();
             worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
 
-            //cache the recieved packet string - we'll use that later to suspend the couroutine until it changes
+            //we store the receive string
             string previousRecieveString = receiveString;
 
             //if it's an object update, process it, otherwise skip
@@ -158,11 +181,12 @@ public class NetworkManager : MonoBehaviour
                         //if it's unique ID matches the packet, update it's position from the packet
                         if (worldState[i].uniqueNetworkID == GetGlobalIDFromPacket(previousRecieveString) || worldState[i].uniqueNetworkID == 0)
                         {
-                            //only update it if we don't own it - you might want to try disabling and seeing the effect
+                            //we update the pos and rot if we dont own the gameobject
                             if (!worldState[i].isLocallyOwned)
                             {
                                 worldState[i].UpdatePosAndRotFromPacket(previousRecieveString);
                             }
+                            //we update the hp if we ownn the player
                             else
                             {
                                 worldState[i].UpdateHpOfPlayerFromPacket(previousRecieveString);
@@ -188,9 +212,10 @@ public class NetworkManager : MonoBehaviour
                             }
 
                         }
-
+                        //if object is not in the worldd we spawn the network object
                         if (!objectIsAlreadyInWorld)
                         {
+                            //we spawn the new player object 
                             GameObject otherPlayerAvatar = Instantiate(networkAvatar);
                             //update its component properties from the packet
                             otherPlayerAvatar.GetComponent<NetworkGameObject>().uniqueNetworkID = GetGlobalIDFromPacket(previousRecieveString);
@@ -201,6 +226,8 @@ public class NetworkManager : MonoBehaviour
 
             }
 
+            //if theres no messages left from the server we wait a frame, we use this so that unity reads all data and only stops when theres no data left, this fixed
+            //the problem of unity being much slower then unreal at updating its information
             if (NoMessagesLeft())
             {
                 yield return new WaitForEndOfFrame();
@@ -209,11 +236,13 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    //this will return true if theres no messages left on the udp client
     private bool NoMessagesLeft()
     {
         return state._udpClient.Client.Available == 0;
     }
 
+    //this gets the global id from the packet
     int GetGlobalIDFromPacket(String packet)
     {
         return Int32.Parse(packet.Split(';')[1]);
@@ -231,18 +260,15 @@ public class NetworkManager : MonoBehaviour
     {
         //this transforms it in a string 
         receiveString = Encoding.ASCII.GetString(receiveBytes);
+        //if the message received is a Assigned Uid message
         if (receiveString.Contains("Assigned UID:"))
         {
-
-            int parseFrom = receiveString.IndexOf(':');
-            int parseTo = receiveString.LastIndexOf(';');
-
-            //we need to parse the string from the server back into ints to work with
+            //we get the local id from the message received
             int localID = Int32.Parse(BetweenStrings(receiveString, ":", ";"));
+            //we get the global id from the message received
             int globalID = Int32.Parse(receiveString.Substring(receiveString.IndexOf(";") + 1));
 
-            Debug.Log("Got assignment: " + localID + " local to: " + globalID + " global");
-
+            //this loops through all objects in the world state
             foreach (NetworkGameObject netObject in worldState)
             {
                 //if the local ID sent by the server matches this game object
@@ -257,22 +283,30 @@ public class NetworkManager : MonoBehaviour
 
     }
 
+    //this gets the value between the start and end
     public static String BetweenStrings(String text, String start, String end)
     {
+        //this finds the position of the start string and we add its length
         int p1 = text.IndexOf(start) + start.Length;
+        //this finds the position of the end string starting from the p1 position
         int p2 = text.IndexOf(end, p1);
 
+        //if end is null we return the substring of p1
         if (end == "") return (text.Substring(p1));
+        //else we return the substring of p1 and p2
         else return text.Substring(p1, p2 - p1);
     }
 
+    //this is called when an enemy player was shot by us
     public void AnEnemyPlayerWasShotByUs(NetworkGameObject characterWeWit, string nameOfWeapon)
     {
+        //we get the message to send to the server
         string enemyPlayerHitMessage = "GameplayEvent: Player shot another player: Player with id;" + GameManager.Instance.ourPlayerNetworkObject.uniqueNetworkID + "; shot player with id; " + characterWeWit.uniqueNetworkID + "; with weapon;" + nameOfWeapon;
+        //we send the message to the server
         SendStringMessage(enemyPlayerHitMessage);
     }
 
-    //this closes the socket when we leave the progran
+    //this closes the socket when we leave the program
     private void CloseSocket()
     {
         if (state._udpClient != null)
@@ -281,6 +315,7 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    //if we close unity we close the socket
     private void OnApplicationQuit()
     {
         CloseSocket();
@@ -291,7 +326,9 @@ public class NetworkManager : MonoBehaviour
     //this sends a message to the server
     private void SendStringMessage(string message)
     {
+        //creates an byte array of the message received
         byte[] array = Encoding.ASCII.GetBytes(message);
+        //sends the message to the server
         state._udpClient.Send(array, array.Length);
     }
 
