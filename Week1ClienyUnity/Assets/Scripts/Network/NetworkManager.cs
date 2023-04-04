@@ -23,6 +23,7 @@ public class NetworkManager : MonoBehaviour
     //this stores the player transform
     //public PlayerInfo player;
     string receiveString = "";
+    bool connectedToServer = true;
     [SerializeField] GameObject networkAvatar;
 
     public List<NetworkGameObject> worldState;
@@ -47,16 +48,23 @@ public class NetworkManager : MonoBehaviour
         //this will receive all messages from the server
         void ReceiveMessageAsyncCallback(IAsyncResult result)
         {
-            //this gets the packet from the server in bytes
-            byte[] receiveBytes = state._udpClient.EndReceive(result, ref state._ipEndPoint);
+            try
+            {
+                //this gets the packet from the server in bytes
+                byte[] receiveBytes = state._udpClient.EndReceive(result, ref state._ipEndPoint);
 
-            IfReceivedMessageIsUIDAssignThem(receiveBytes);
+                IfReceivedMessageIsUIDAssignThem(receiveBytes);
 
-            //send the received message to the function that handles the received messages
-            ReceivedMessageFromServer(receiveBytes);
+                //send the received message to the function that handles the received messages
+                ReceivedMessageFromServer(receiveBytes);
 
-            //this recalls this function to make it loop infinitely
-            state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state); //self-callback, meaning this loops infinitely
+                //this recalls this function to make it loop infinitely
+                state._udpClient.BeginReceive(ReceiveMessageAsyncCallback, state); //self-callback, meaning this loops infinitely
+            }
+            catch(Exception e)
+            {
+                connectedToServer = false;
+            }
         }
     
         StartCoroutine(SendNetworkUpdates(state._udpClient));
@@ -126,7 +134,7 @@ public class NetworkManager : MonoBehaviour
 
     IEnumerator UpdateWorldState(UdpClient client)
     {
-        while (true)
+        while (connectedToServer)
         {
             //read in the current world state as all network game objects in the scene
             worldState = new List<NetworkGameObject>();
@@ -196,12 +204,8 @@ public class NetworkManager : MonoBehaviour
             if (NoMessagesLeft())
             {
                 yield return new WaitForEndOfFrame();
-                //yield return new WaitUntil(() => !receiveString.Equals(previousRecieveString));
             }
-            //else
-            //{
-            //    yield return new WaitForEndOfFrame(); // Wait for the next frame if there are no messages left
-            //}
+
         }
     }
 
