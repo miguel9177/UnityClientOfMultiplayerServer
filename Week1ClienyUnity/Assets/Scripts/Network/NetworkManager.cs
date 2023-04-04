@@ -118,7 +118,8 @@ public class NetworkManager : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(0.5f);
+            //yield return new WaitForEndOfFrame();
         }
     }
 
@@ -127,7 +128,6 @@ public class NetworkManager : MonoBehaviour
     {
         while (true)
         {
-
             //read in the current world state as all network game objects in the scene
             worldState = new List<NetworkGameObject>();
             worldState.AddRange(GameObject.FindObjectsOfType<NetworkGameObject>());
@@ -170,7 +170,7 @@ public class NetworkManager : MonoBehaviour
                     {
                         int idReceived = GetGlobalIDFromPacket(previousRecieveString);
                         //for every networked gameobject in the world
-                        for (int i = 0; i < worldState.Count; i++) 
+                        for (int i = 0; i < worldState.Count; i++)
                         {
                             //if it's unique ID matches the packet, update it's position from the packet
                             if (worldState[i].uniqueNetworkID == idReceived)
@@ -181,7 +181,7 @@ public class NetworkManager : MonoBehaviour
 
                         }
 
-                        if(!objectIsAlreadyInWorld)
+                        if (!objectIsAlreadyInWorld)
                         {
                             GameObject otherPlayerAvatar = Instantiate(networkAvatar);
                             //update its component properties from the packet
@@ -193,11 +193,21 @@ public class NetworkManager : MonoBehaviour
 
             }
 
-            //wait until the incoming string with packet data changes then iterate again
-
-            yield return new WaitUntil(() => !receiveString.Equals(previousRecieveString));
-            //yield return new WaitForEndOfFrame();
+            if (NoMessagesLeft())
+            {
+                yield return new WaitForEndOfFrame();
+                //yield return new WaitUntil(() => !receiveString.Equals(previousRecieveString));
+            }
+            //else
+            //{
+            //    yield return new WaitForEndOfFrame(); // Wait for the next frame if there are no messages left
+            //}
         }
+    }
+
+    private bool NoMessagesLeft()
+    {
+        return state._udpClient.Client.Available == 0;
     }
 
     int GetGlobalIDFromPacket(String packet)
